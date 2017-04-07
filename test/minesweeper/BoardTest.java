@@ -9,14 +9,24 @@ import org.junit.Test;
  * TODO: Description
  */
 public class BoardTest {
-    
-    // TODO: Testing strategy
-    
-    @Test(expected=AssertionError.class)
-    public void testAssertionsEnabled() {
-        assert false; // make sure assertions are enabled with VM argument: -ea
-    }
-    
-    // TODO: Tests
-    
+
+  // TODO: Testing strategy
+
+  @Test(expected = AssertionError.class)
+  public void testAssertionsEnabled() {
+    assert false; // make sure assertions are enabled with VM argument: -ea
+  }
+
+  // TODO: Tests
+
+  @Test
+  public void testBoardCreation() throws Exception {
+    // given
+
+    // when
+    Board board = new Board(10, 10);
+    // then
+    System.out.println(board);
+  }
+
 }
