@@ -11,15 +11,33 @@ import java.net.Socket;
  */
 public class Worker implements Runnable {
 
-  private Socket socket;
+  private final boolean debug;
+  private final BoardEventListener boardEventListener;
+  private final Socket socket;
   private boolean keepListening = true; // when false, ends runnable
 
-  public Worker(Socket socket) {
+  public Worker(Socket socket, boolean debug, BoardEventListener boardEventListener) {
     this.socket = socket;
+    this.debug = debug;
+    this.boardEventListener = boardEventListener;
   }
 
   @Override
   public void run() {
+    PrintWriter out = null;
+    try {
+      out = new PrintWriter(socket.getOutputStream(), true);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    out.printf(
+        "Welcome to Minesweeper. " +
+            "Players: %d including you. " +
+            "Board: %d columns by %d rows. " +
+            "Type 'help' for help.\r\n",
+        0, 0, 0
+    );
+
     while (keepListening) {
       // handle the client
       try {
@@ -30,6 +48,11 @@ public class Worker implements Runnable {
       } finally {
         stopListening();
       }
+    }
+    try {
+      socket.close();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
@@ -49,6 +72,8 @@ public class Worker implements Runnable {
         if (output != null) {
           // TODO: Consider improving spec of handleRequest to avoid use of null
           out.println(output);
+        } else {
+          break;
         }
       }
     }
@@ -70,19 +95,20 @@ public class Worker implements Runnable {
     String[] tokens = input.split(" ");
     if (tokens[0].equals("look")) {
       // 'look' request
-      // TODO Problem 5
+      return boardEventListener.look();
     } else if (tokens[0].equals("help")) {
       // 'help' request
-      // TODO Problem 5
+      return "RTFM!";
     } else if (tokens[0].equals("bye")) {
       // 'bye' request
-      // TODO Problem 5
+      stopListening();
+      return null;
     } else {
       int x = Integer.parseInt(tokens[1]);
       int y = Integer.parseInt(tokens[2]);
       if (tokens[0].equals("dig")) {
         // 'dig x y' request
-        // TODO Problem 5
+        return boardEventListener.dig(x, y);
       } else if (tokens[0].equals("flag")) {
         // 'flag x y' request
         // TODO Problem 5
@@ -98,11 +124,6 @@ public class Worker implements Runnable {
   // stop listening for incoming messages
   public void stopListening() {
     keepListening = false;
-    try {
-      socket.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 
 }

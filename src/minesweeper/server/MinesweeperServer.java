@@ -14,11 +14,12 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import minesweeper.Board;
 
 /**
  * Multiplayer Minesweeper server.
  */
-public class MinesweeperServer {
+public class MinesweeperServer implements BoardEventListener {
 
   // System thread safety argument
   //   TODO Problem 5
@@ -48,18 +49,20 @@ public class MinesweeperServer {
   private ExecutorService threadPool;
 
   // TODO: Abstraction function, rep invariant, rep exposure
+  private Board board;
 
   /**
    * Make a MinesweeperServer that listens for connections on port.
    *
    * @param port  port number, requires 0 <= port <= 65535
    * @param debug debug mode flag
+   * @param board
    * @throws IOException if an error occurs opening the server socket
    */
-  public MinesweeperServer(int port, boolean debug) throws IOException {
+  public MinesweeperServer(int port, boolean debug, Board board) throws IOException {
     serverSocket = new ServerSocket(port);
     this.debug = debug;
-
+    this.board = board;
     threadPool = Executors.newCachedThreadPool();
   }
 
@@ -79,7 +82,7 @@ public class MinesweeperServer {
 
       // handle the client
       System.out.println("connection received " + socket.getInetAddress());
-      threadPool.execute(new Worker(socket));
+      threadPool.execute(new Worker(socket, debug, this));
     }
   }
 
@@ -198,10 +201,21 @@ public class MinesweeperServer {
    * @throws IOException if a network error occurs
    */
   public static void runMinesweeperServer(boolean debug, Optional<File> file, int sizeX, int sizeY, int port) throws IOException {
+    Board board = file.map(x -> new Board(x.toPath()))
+        .orElseGet(() -> new Board(sizeX, sizeY));
 
-    // TODO: Continue implementation here in problem 4
-
-    MinesweeperServer server = new MinesweeperServer(port, debug);
+    MinesweeperServer server = new MinesweeperServer(port, debug, board);
     server.serve();
   }
+
+  @Override
+  public String look() {
+    return board.look();
+  }
+
+  @Override
+  public String dig(int x, int y) {
+    return board.dig(x,y);
+  }
+
 }

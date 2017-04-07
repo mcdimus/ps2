@@ -35,4 +35,16 @@ public class BoardCell {
     }
   }
 
+  public void dig() {
+    this.state = BoardCellState.DUG;
+  }
+
+  @Override
+  public String toString() {
+    if (this.state == BoardCellState.DUG) {
+      return Integer.toString(this.value);
+    }
+    return state.toString();
+  }
+
 }
