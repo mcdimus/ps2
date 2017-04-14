@@ -3,6 +3,7 @@
  */
 package minesweeper.server;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -19,7 +20,7 @@ import minesweeper.Board;
 /**
  * Multiplayer Minesweeper server.
  */
-public class MinesweeperServer implements BoardEventListener {
+public class MinesweeperServer implements BoardEventListener, AutoCloseable {
 
   // System thread safety argument
   //   TODO Problem 5
@@ -50,6 +51,7 @@ public class MinesweeperServer implements BoardEventListener {
 
   // TODO: Abstraction function, rep invariant, rep exposure
   private Board board;
+  private int playersCount;
 
   /**
    * Make a MinesweeperServer that listens for connections on port.
@@ -209,13 +211,47 @@ public class MinesweeperServer implements BoardEventListener {
   }
 
   @Override
-  public String look() {
+  synchronized public String look() {
     return board.look();
   }
 
   @Override
-  public String dig(int x, int y) {
+  synchronized public String dig(int x, int y) {
     return board.dig(x,y);
   }
 
+  @Override
+  synchronized public String flag(int x, int y) {
+    return board.flag(x,y);
+  }
+
+  @Override
+  synchronized public String deflag(int x, int y) {
+    return board.deflag(x,y);
+  }
+
+  @Override
+  public void close() throws Exception {
+    serverSocket.close();
+  }
+
+  @Override
+  synchronized public void playerConnected() {
+    playersCount++;
+  }
+
+  @Override
+  synchronized public void playerDisconnected() {
+    playersCount--;
+  }
+
+  @Override
+  synchronized public int getPlayerCount() {
+    return playersCount;
+  }
+
+  @Override
+  public Point getBoardSize() {
+    return board.getSize();
+  }
 }

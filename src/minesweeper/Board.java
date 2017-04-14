@@ -3,6 +3,7 @@
  */
 package minesweeper;
 
+import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -10,8 +11,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.joining;
 
 /**
  * TODO: Specification
@@ -139,12 +139,65 @@ public class Board {
       stringBuilder.append("\n");
     }
 
-    return stringBuilder.toString();
+    return stringBuilder.deleteCharAt(stringBuilder.length() - 1).toString();
   }
 
   public String dig(int x, int y) {
-    cells[y][x].dig();
+    if (cells[y][x].getState() == BoardCellState.FLAGGED) {
+      return look();
+    }
+
+    int val = cells[y][x].dig();
+    if (val > 0) {
+      return look();
+    } else if (val == -1) {
+      int countAdjacentBombs = 0;
+      for (int i = coerceIn(y - 1, 0, cells.length); i <= coerceIn(y + 1, 0, cells.length); i++) {
+        for (int j = coerceIn(x - 1, 0, cells[y].length); j <= coerceIn(x + 1, 0, cells[y].length); j++) {
+          BoardCell cell = cells[i][j];
+          if (cell.hasBomb() && !(i == y && j == x)) {
+            countAdjacentBombs++;
+          }
+          cell.decrement();
+        }
+      }
+      cells[y][x] = new BoardCell(countAdjacentBombs, BoardCellState.DUG);
+      if (cells[y][x].getValue() == 0) {
+        digEmpty(x, y);
+      }
+      return "BOOM!";
+    } else {
+      digEmpty(x, y);
+      return look();
+    }
+  }
+
+  private void digEmpty(int x, int y) {
+    for (int i = coerceIn(y - 1, 0, cells.length); i <= coerceIn(y + 1, 0, cells.length); i++) {
+      for (int j = coerceIn(x - 1, 0, cells[y].length); j <= coerceIn(x + 1, 0, cells[y].length); j++) {
+        BoardCell cell = cells[i][j];
+        if (cell.getState() == BoardCellState.UNTOUCHED) {
+          int val = cell.dig();
+          if (val == 0) {
+            digEmpty(j, i);
+          }
+        }
+      }
+    }
+  }
+
+  public String flag(int x, int y) {
+    cells[y][x].flag();
     return look();
+  }
+
+  public String deflag(int x, int y) {
+    cells[y][x].deflag();
+    return look();
+  }
+
+  public Point getSize() {
+    return new Point(cells[0].length, cells.length);
   }
 
 }

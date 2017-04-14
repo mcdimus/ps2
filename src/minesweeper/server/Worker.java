@@ -20,6 +20,7 @@ public class Worker implements Runnable {
     this.socket = socket;
     this.debug = debug;
     this.boardEventListener = boardEventListener;
+    this.boardEventListener.playerConnected();
   }
 
   @Override
@@ -35,7 +36,7 @@ public class Worker implements Runnable {
             "Players: %d including you. " +
             "Board: %d columns by %d rows. " +
             "Type 'help' for help.\r\n",
-        0, 0, 0
+        boardEventListener.getPlayerCount(), ((int) boardEventListener.getBoardSize().getX()), ((int) boardEventListener.getBoardSize().getY())
     );
 
     while (keepListening) {
@@ -51,6 +52,7 @@ public class Worker implements Runnable {
     }
     try {
       socket.close();
+      boardEventListener.playerDisconnected();
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -72,6 +74,10 @@ public class Worker implements Runnable {
         if (output != null) {
           // TODO: Consider improving spec of handleRequest to avoid use of null
           out.println(output);
+          if (!debug && "BOOM!".equals(output)) {
+            stopListening();
+            break;
+          }
         } else {
           break;
         }
@@ -111,10 +117,11 @@ public class Worker implements Runnable {
         return boardEventListener.dig(x, y);
       } else if (tokens[0].equals("flag")) {
         // 'flag x y' request
-        // TODO Problem 5
+        return boardEventListener.flag(x, y);
+
       } else if (tokens[0].equals("deflag")) {
         // 'deflag x y' request
-        // TODO Problem 5
+        return boardEventListener.deflag(x, y);
       }
     }
     // TODO: Should never get here, make sure to return in each of the cases above
